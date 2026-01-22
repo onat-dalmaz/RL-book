@@ -41,22 +41,25 @@ def sanitize_notebook(input_path: str, output_path: str) -> None:
         if cell.get('cell_type') == 'markdown':
             source = cell.get('source', [])
             if isinstance(source, list):
-                # Join lines, fix Unicode, then split back into lines (preserve structure)
-                text = ''.join(source)
-                original = text
+                # Preserve the original list structure - each item is a line or part of a line
+                # Join to get full text, fix Unicode, then reconstruct preserving structure
+                original_text = ''.join(source)
+                text = original_text
                 for uchar, replacement in unicode_fixes.items():
                     text = text.replace(uchar, replacement)
-                if text != original:
-                    # Split back into lines, preserving the original line structure
-                    # Each line should be a separate list item
+                if text != original_text:
+                    # Reconstruct the list structure by splitting on newlines
+                    # and preserving how the original was structured
                     lines = text.split('\n')
-                    # Add back the newlines (except for the last line if it doesn't end with one)
                     result = []
                     for i, line in enumerate(lines):
                         result.append(line)
-                        # Add newline after each line except the last (if original didn't end with newline)
-                        if i < len(lines) - 1 or text.endswith('\n'):
+                        # Add newline as separate item (matching Jupyter's format)
+                        if i < len(lines) - 1:
                             result.append('\n')
+                    # If original ended with newline, preserve that
+                    if original_text.endswith('\n') and not text.endswith('\n'):
+                        result.append('\n')
                     cell['source'] = result
                     changed = True
             elif isinstance(source, str):
