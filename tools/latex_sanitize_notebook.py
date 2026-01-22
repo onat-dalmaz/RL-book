@@ -1,21 +1,41 @@
 #!/usr/bin/env python3
 """
 Sanitize Jupyter notebook for LaTeX PDF export.
-MINIMAL approach: only fix Unicode characters that break LaTeX.
-Preserves ALL formatting, math delimiters, and underscores for proper Jupyter display.
+Fix Unicode characters that break LaTeX and normalize math delimiters
+in markdown so nbconvert keeps math in math mode.
 """
 
 import json
 import sys
 
 
+def _convert_math_delimiters(text: str) -> str:
+    r"""Convert \( \) and \[ \] to $ and $$ outside code blocks."""
+    parts = text.split("```")
+    for i, part in enumerate(parts):
+        if i % 2 == 1:
+            # Inside fenced code block; leave unchanged.
+            continue
+        subparts = part.split("`")
+        for j, sub in enumerate(subparts):
+            if j % 2 == 1:
+                # Inside inline code; leave unchanged.
+                continue
+            sub = sub.replace(r"\[", "$$")
+            sub = sub.replace(r"\]", "$$")
+            sub = sub.replace(r"\(", "$")
+            sub = sub.replace(r"\)", "$")
+            subparts[j] = sub
+        parts[i] = "`".join(subparts)
+    return "```".join(parts)
+
+
 def sanitize_notebook(input_path: str, output_path: str) -> None:
-    """Sanitize a Jupyter notebook for LaTeX export - minimal changes only."""
+    """Sanitize a Jupyter notebook for LaTeX export."""
     with open(input_path, 'r', encoding='utf-8') as f:
         nb = json.load(f)
     
-    # ONLY fix Unicode characters that actually break LaTeX compilation
-    # Do NOT touch math delimiters, underscores, or any other formatting
+    # Fix Unicode characters that actually break LaTeX compilation
     unicode_fixes = {
         '\u00A0': ' ',  # NBSP
         '\u2018': "'",  # left single quote
@@ -47,6 +67,7 @@ def sanitize_notebook(input_path: str, output_path: str) -> None:
                 text = original_text
                 for uchar, replacement in unicode_fixes.items():
                     text = text.replace(uchar, replacement)
+                text = _convert_math_delimiters(text)
                 if text != original_text:
                     # Reconstruct the list structure by splitting on newlines
                     # and preserving how the original was structured
@@ -66,6 +87,7 @@ def sanitize_notebook(input_path: str, output_path: str) -> None:
                 original = source
                 for uchar, replacement in unicode_fixes.items():
                     source = source.replace(uchar, replacement)
+                source = _convert_math_delimiters(source)
                 if source != original:
                     cell['source'] = source
                     changed = True
@@ -75,7 +97,7 @@ def sanitize_notebook(input_path: str, output_path: str) -> None:
         json.dump(nb, f, ensure_ascii=False, indent=1)
     
     if changed:
-        print(f"Sanitized notebook written to: {output_path} (Unicode fixes only)")
+        print(f"Sanitized notebook written to: {output_path} (Unicode + math delimiter fixes)")
     else:
         print(f"Notebook copied to: {output_path} (no changes needed)")
 
