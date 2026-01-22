@@ -47,6 +47,10 @@ def sanitize_notebook(input_path: str, output_path: str) -> None:
                 original = text
                 for uchar, replacement in unicode_fixes.items():
                     text = text.replace(uchar, replacement)
+                # Fix specific LaTeX issue: ensure \min is in proper math mode
+                # nbconvert sometimes strips \( \) so use $ $ for \min expressions
+                text = text.replace('\\(\\min(', '$\\min(')
+                text = text.replace('\\min(100, s + D)\\)', '\\min(100, s + D)$')
                 if text != original:
                     cell['source'] = list(text)
                     changed = True
@@ -54,6 +58,9 @@ def sanitize_notebook(input_path: str, output_path: str) -> None:
                 original = source
                 for uchar, replacement in unicode_fixes.items():
                     source = source.replace(uchar, replacement)
+                # Fix \min math mode issue
+                source = source.replace('\\(\\min(', '$\\min(')
+                source = source.replace('\\min(100, s + D)\\)', '\\min(100, s + D)$')
                 if source != original:
                     cell['source'] = source
                     changed = True
