@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
 Sanitize Jupyter notebook for LaTeX PDF export.
-Minimal approach: only fix Unicode characters that break LaTeX.
-Preserves all math delimiters and formatting for proper Jupyter display.
+MINIMAL approach: only fix Unicode characters that break LaTeX.
+Preserves ALL formatting, math delimiters, and underscores for proper Jupyter display.
 """
 
 import json
 import sys
-from pathlib import Path
 
 
 def sanitize_notebook(input_path: str, output_path: str) -> None:
@@ -15,7 +14,7 @@ def sanitize_notebook(input_path: str, output_path: str) -> None:
     with open(input_path, 'r', encoding='utf-8') as f:
         nb = json.load(f)
     
-    # Only fix Unicode characters that actually break LaTeX compilation
+    # ONLY fix Unicode characters that actually break LaTeX compilation
     # Do NOT touch math delimiters, underscores, or any other formatting
     unicode_fixes = {
         '\u00A0': ' ',  # NBSP
@@ -47,10 +46,6 @@ def sanitize_notebook(input_path: str, output_path: str) -> None:
                 original = text
                 for uchar, replacement in unicode_fixes.items():
                     text = text.replace(uchar, replacement)
-                # Fix specific LaTeX issue: ensure \min is in proper math mode
-                # nbconvert sometimes strips \( \) so use $ $ for \min expressions
-                text = text.replace('\\(\\min(', '$\\min(')
-                text = text.replace('\\min(100, s + D)\\)', '\\min(100, s + D)$')
                 if text != original:
                     cell['source'] = list(text)
                     changed = True
@@ -58,9 +53,6 @@ def sanitize_notebook(input_path: str, output_path: str) -> None:
                 original = source
                 for uchar, replacement in unicode_fixes.items():
                     source = source.replace(uchar, replacement)
-                # Fix \min math mode issue
-                source = source.replace('\\(\\min(', '$\\min(')
-                source = source.replace('\\min(100, s + D)\\)', '\\min(100, s + D)$')
                 if source != original:
                     cell['source'] = source
                     changed = True
