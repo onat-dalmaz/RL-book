@@ -38,45 +38,15 @@ def sanitize_markdown(text: str) -> str:
     for unicode_char, replacement in replacements.items():
         text = text.replace(unicode_char, replacement)
     
-    # Step 1B: Fix math delimiters - convert \( \) to $ $ and \[ \] to $$ $$
-    # Be careful not to replace these inside code blocks
-    # First, split by code blocks to preserve them
-    parts = []
-    code_pattern = re.compile(r'```[\s\S]*?```|`[^`\n]+`')
-    last_pos = 0
-    
-    for match in code_pattern.finditer(text):
-        # Add text before code block
-        if match.start() > last_pos:
-            parts.append(('text', text[last_pos:match.start()]))
-        # Add code block as-is
-        parts.append(('code', match.group()))
-        last_pos = match.end()
-    
-    # Add remaining text
-    if last_pos < len(text):
-        parts.append(('text', text[last_pos:]))
-    
-    # Process text parts only
-    result_parts = []
-    for part_type, part_content in parts:
-        if part_type == 'code':
-            result_parts.append(part_content)
-        else:
-            # Fix math delimiters in text
-            part_content = part_content.replace('\\(', '$')
-            part_content = part_content.replace('\\)', '$')
-            part_content = part_content.replace('\\[', '$$')
-            part_content = part_content.replace('\\]', '$$')
-            result_parts.append(part_content)
-    
-    text = ''.join(result_parts)
+    # Step 1B: Skip math delimiter conversion - nbconvert handles \( \) and \[ \] correctly
+    # We don't need to convert them to $ $ or $$ $$ as this makes the notebook look weird in Jupyter
+    # and nbconvert can handle the original delimiters fine
     
     # Step 1C: Escape underscores in plain text (outside code and math)
     # Split by code blocks and math regions
     result = []
-    # Pattern to match code blocks, inline math $...$, and display math $$...$$
-    split_pattern = re.compile(r'```[\s\S]*?```|`[^`\n]+`|\$\$[\s\S]*?\$\$|\$[^$\n]+\$')
+    # Pattern to match code blocks, inline math \(...\) or $...$, and display math \[...\] or $$...$$
+    split_pattern = re.compile(r'```[\s\S]*?```|`[^`\n]+`|\\\[[\s\S]*?\\\]|\$\$[\s\S]*?\$\$|\\\([^\\\)]*?\\\)|\$[^$\n]+\$')
     last_pos = 0
     
     for match in split_pattern.finditer(text):
