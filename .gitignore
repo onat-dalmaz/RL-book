@@ -1,6 +1,8 @@
 # Our PDFs are all generated
 *.pdf
 !Assignments/Assignment 1/*.pdf
+!Assignments/Assignment 2/*.pdf
+!Assignments/Assignment 3/*.pdf
 
 # Emacs files
 *~
