@@ -11,7 +11,7 @@ Place the contents of `rl_project/` there so that `phase2_dp_from_parquets.py` i
 
 ## How to run
 
-Canonical command (edit paths as needed):
+Canonical command:
 
 ```bash
 python3 rl_project/phase2_dp_from_parquets.py \
@@ -39,5 +39,5 @@ Example: `--run_root /data/COINS/NEAR` and `--outdir ./results/phase2_NEAR_fee2`
 
 ## Notes
 
-- No results are included; results are written to `--outdir`.
+- results are written to `--outdir`.
 - Step1 coin dir must contain parquets with columns: `ts` (or `timestamp`), `y`, `pred` (e.g. `trades_val.parquet`, `trades_test.parquet` under `cv/<COIN>/fold_0/`).
