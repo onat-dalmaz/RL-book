@@ -1,0 +1,14 @@
+# Outputs / datasets — do not commit
+results/
+out/
+outputs/
+*.zip
+*.tar.gz
+*.parquet
+*.csv
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
